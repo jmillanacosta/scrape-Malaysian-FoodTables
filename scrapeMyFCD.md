@@ -14,12 +14,10 @@ There are two sources:
 
 
 ```python
-from bs4 import BeautifulSoup as bs
 import json
 import requests
 import re
 import pandas as pd
-
 ```
 
 ## A) Scraping the current Malaysian FCD Module
