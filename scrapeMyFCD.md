@@ -82,7 +82,7 @@ for url in urls:
 
 ```
 
-# B) Scraping the Industry Module
+## B) Scraping the Industry Module
 Process is similar to before, but the website with all identifiers is https://myfcd.moh.gov.my/myfcdindustri//static/DataTables-1.10.12/examples/server_side/scripts/server_processing.php in this case. The URLs look like this:
 `https://myfcd.moh.gov.my/myfcdindustri/index.php/site/detail_product/XXXXXXX/0/10/-1/0/0/`, where X is any digit from 0-9.
 
