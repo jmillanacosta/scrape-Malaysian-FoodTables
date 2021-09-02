@@ -24,7 +24,7 @@ import pandas as pd
 
 ## A) Scraping the current Malaysian FCD Module
 
-### Request al URLs contained in the dynamic javascript table at MyFCD
+### Request all URLs contained in the dynamic javascript table at MyFCD
 Inspecting the html of FCD, I found all item identifiers are stored under the site https://myfcd.moh.gov.my/myfcdcurrent/index.php/ajax/datatable_data.
 All links to the food items look like this:
 `https://myfcd.moh.gov.my/myfcdcurrent/index.php/site/detail_product/RXXXXXX/0/168/-1/0/0`,
@@ -106,7 +106,7 @@ for match in matches:
     url = "".join(("".join((url1, match)), url2))
     urls.append(url)
 ```
-
+### Request all URLs contained in the dynamic javascript table at MyFCD - Industry Module
 
 ```python
 nutritionIndustry = dict()
