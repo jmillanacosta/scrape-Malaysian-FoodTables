@@ -138,9 +138,9 @@ for url in urls:
     # Create list to store nutritional values for this item
     nutrients = list()
     # Retrieve the subdictionary entry containing the value of each nutrient
-    for nutrient in nutriJSON.keys():
-        value = nutriJSON[nutrient]["value"]
-        nutrient = nutriJSON[nutrient]["name"]
+    for item in nutriJSON.keys():
+        value = nutriJSON[item]["value"]
+        nutrient = nutriJSON[item]["name"]
         nutrientValue = (nutrient, value)
         nutrients.append(nutrientValue)
     # Append each entry to the nutrition dictionary
