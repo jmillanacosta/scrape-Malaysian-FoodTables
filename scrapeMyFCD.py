@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Scraping the Food Composition Tables from the [Malaysian Food Composition Database (MYFCD)](https://myfcd.moh.gov.my/myfcdcurrent/)
-# 
-# ## Introduction
+# Scraping the Food Composition Tables from the [Malaysian Food Composition Database (MYFCD)](https://myfcd.moh.gov.my/myfcdcurrent/)
+
+## Introduction
 # The Malaysian Food Composition tables are not available for download, but they can be consulted at [MyFCD](https://myfcd.moh.gov.my/myfcdcurrent/). This is a Python script that opens the MyFCD website, scrapes all data from the food composition tables, and returns the nutritional information for each entry in a .csv file.
-# 
 # It is convenient to run this script every time the MyFCD is updated in order to retrieve the latest food composition data.
-# 
+
 # There are two sources: 
 # * [The current Malaysian FCD](https://myfcd.moh.gov.my/myfcdcurrent), with around 170 food items at the moment
 # * [The Industry module](https://myfcd.moh.gov.my/myfcdindustri), with around 330 items at the moment
 
-# ## Imports
-# ### Libraries
+## Imports
+### Libraries
 
 import json
 import requests
@@ -21,9 +20,9 @@ import re
 import pandas as pd
 
 
-# ## A) Scraping the current Malaysian FCD Module
+## A) Scraping the current Malaysian FCD Module
 
-# ### Request al URLs contained in the dynamic javascript table at MyFCD
+### Request al URLs contained in the dynamic javascript table at MyFCD
 # Inspecting the html of FCD, I found all item identifiers are stored under the site https://myfcd.moh.gov.my/myfcdcurrent/index.php/ajax/datatable_data.
 # All links to the food items look like this:
 # `https://myfcd.moh.gov.my/myfcdcurrent/index.php/site/detail_product/RXXXXXX/0/168/-1/0/0`,
@@ -46,7 +45,7 @@ for match in matches:
     urls.append(url)
 
 
-# ### Create the nutrition dictionary that will gather and store the data scraped from the website
+### Create the nutrition dictionary that will gather and store the data scraped from the website
 
 
 nutrition = dict()
@@ -71,15 +70,14 @@ for url in urls:
     # Create list to store nutritional values for this item
     nutrients = list()
     # Retrieve the subdictionary entry containing the value of each nutrient
-    for nutrient in nutriJSON.keys():
-        value = nutriJSON[nutrient]["value"]
+    for item in nutriJSON.keys():
+        value = nutriJSON[item]["value"]
         nutrientValue = (nutrient, value)
         nutrients.append(nutrientValue)
     # Append each entry to the nutrition dictionary
     nutrition[name] = dict(nutrients)
 
-
-# # B) Scraping the Industry Module
+## B) Scraping the Industry Module
 # Process is similar to before, but the website with all identifiers is https://myfcd.moh.gov.my/myfcdindustri//static/DataTables-1.10.12/examples/server_side/scripts/server_processing.php in this case. The URLs look like this:
 # `https://myfcd.moh.gov.my/myfcdindustri/index.php/site/detail_product/XXXXXXX/0/10/-1/0/0/`, where X is any digit from 0-9.
 
@@ -141,9 +139,8 @@ for url in urls:
     nutritionIndustry[name] = dict(nutrients)
 
 
-# # Export a csv combining both databases
+## Export a csv combining both databases
 # This csv will be formatted in R afterwards, but it is already utilizable and contrastable against MyFCD.
-
 # Append the two databases into one dictionary
 nutrition.update(nutritionIndustry)
 # Create a data frame and export it in csv
