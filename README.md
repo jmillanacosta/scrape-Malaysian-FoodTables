@@ -2,7 +2,7 @@
 ## [Malaysian Food Composition Database (MYFCD)](https://myfcd.moh.gov.my/myfcdcurrent/)
 
 ## Introduction
-This code retrieves a .csv and json with all entries in the Malaysian Food Composition Database. I wrote this code to help some colleagues with their analyses: the Malaysian Food Composition tables are not available for download, but they can be consulted at [MyFCD](https://myfcd.moh.gov.my/myfcdcurrent/). The code opens the 3 modules in the MyFCD website, scrapes all relevant data from the food composition tables, and returns the relevant nutritional information for each entry in a .csv file.
+This code retrieves a .csv and json with all entries in the Malaysian Food Composition Database. I wrote this code to help some colleagues with their analyses: the Malaysian Food Composition tables are not available for download, but they can be consulted at [MyFCD](https://myfcd.moh.gov.my/myfcdcurrent/). The code opens the 3 modules in the MyFCD website, scrapes all relevant data from the food composition tables, and returns the relevant nutritional information for each entry in a .csv file (and a JSON too).
 
 There are three sources: 
 * [The current Malaysian FCD](https://myfcd.moh.gov.my/myfcdcurrent), with around 170 entries at the moment
