@@ -7,8 +7,9 @@ The Malaysian Food Composition tables are not available for download, but they c
 It is convenient to run this script every time the MyFCD is updated in order to retrieve the latest food composition data.
 
 There are two sources: 
-* [The current Malaysian FCD](https://myfcd.moh.gov.my/myfcdcurrent), with around 170 food items at the moment
-* [The Industry module](https://myfcd.moh.gov.my/myfcdindustri), with around 330 items at the moment
+* [The current Malaysian FCD](https://myfcd.moh.gov.my/myfcdcurrent), with around 170 entries at the moment
+* [The Industry module](https://myfcd.moh.gov.my/myfcdindustri), with around 330 entries at the moment
+* [The 1997 Module](https://myfcd.moh.gov.my/myfcd97), with more than 1030 entries 
 
 ## A) Scraping the current Malaysian FCD Module
 Request al URLs contained in the dynamic javascript table at MyFCD.
