@@ -6,7 +6,7 @@ This code retrieves a .csv and json with all entries in the Malaysian Food Compo
 The Malaysian Food Composition tables are not available for download, but they can be consulted at [MyFCD](https://myfcd.moh.gov.my/myfcdcurrent/). This is a Python script that opens the MyFCD website, scrapes all data from the food composition tables, and returns the nutritional information for each entry in a .csv file.
 It is convenient to run this script every time the MyFCD is updated in order to retrieve the latest food composition data.
 
-There are two sources: 
+There are three sources: 
 * [The current Malaysian FCD](https://myfcd.moh.gov.my/myfcdcurrent), with around 170 entries at the moment
 * [The Industry module](https://myfcd.moh.gov.my/myfcdindustri), with around 330 entries at the moment
 * [The 1997 Module](https://myfcd.moh.gov.my/myfcd97), with more than 1030 entries 
