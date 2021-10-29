@@ -1,244 +1,157 @@
 #!/usr/bin/env python
-# coding: utf-8
+"""
+Author: Javi Millán
 
-# Scraping the Food Composition Tables from the [Malaysian Food Composition Database (MYFCD)](https://myfcd.moh.gov.my/myfcdcurrent/)
+Scrape the Malaysian Food Composition Database
 
-## Introduction
-# The Malaysian Food Composition tables are not available for download, but they can be consulted at [MyFCD](https://myfcd.moh.gov.my/myfcdcurrent/). This is a Python script that opens the MyFCD website, scrapes all data from the food composition tables, and returns the nutritional information for each entry in a .csv file.
-# It is convenient to run this script every time the MyFCD is updated in order to retrieve the latest food composition data.
+"""
+# This code retrieves a .csv and json with all entries in the Malaysian Food Composition Database.
 
-# There are two sources: 
-# * [The current Malaysian FCD](https://myfcd.moh.gov.my/myfcdcurrent), with around 170 food items at the moment
-# * [The Industry module](https://myfcd.moh.gov.my/myfcdindustri), with around 330 items at the moment
-
-## Imports
-### Libraries
-
+## import statements
+import textwrap
 import json
 import requests
 import re
 import pandas as pd
-print("//////////////////////////////////////////////")
-print("Scrape the Malaysian Food Composition Database")
-print("//////////////////////////////////////////////")
-print(4*"\n")
-## A) Scraping the current Malaysian FCD Module
+import time
 
-### Request al URLs contained in the dynamic javascript table at MyFCD
-# Inspecting the html of FCD, I found all item identifiers are stored under the site https://myfcd.moh.gov.my/myfcdcurrent/index.php/ajax/datatable_data.
-# All links to the food items look like this:
-# `https://myfcd.moh.gov.my/myfcdcurrent/index.php/site/detail_product/RXXXXXX/0/168/-1/0/0`,
-# where RXXXXXX is each individual identifier, and X any digit 0-9. The code below generates all food item URLs:
 
+# Define variables for each of the modules A, B, C.
+### Shared properties ###
+my_headers = {'User-Agent': 'Mozilla/5.0'}
+title_tags = "<h3>"
+begin_JSON_tag, end_JSON_tag = "var product_nutrients =  ", ";\\n"
+
+### A) Current module ###
 # Set up request parameters
-print("Setting up A) Malaysian FCD Current Module")
-print("//////////////////////////////////////////////")
-print(4*"\n")
-headers={'User-Agent': 'Mozilla/5.0'}
-identifierSite = "https://myfcd.moh.gov.my/myfcdcurrent/index.php/ajax/datatable_data"
-r = requests.get(identifierSite, headers=headers)
-parsed = r.text
-pattern = "R\d+\d+\d+\d+\d+\d+"
-matches = re.findall(pattern, parsed)
-print("Found all items")
-# URLs to be generated contain matches inbetween strings url1 and url1
-url1, url2 = "https://myfcd.moh.gov.my/myfcdcurrent/index.php/site/detail_product/", "/0/168/-1/0/0"
-# Create list to store all URLs
-urls = []
-# Assemble each identifier's URL
-print("Finding all URLs for items in A) FCD current")
-for match in matches:    
-    url = "".join(("".join((url1, match)), url2))
-    print(match, " URL:", url)
-    urls.append(url)
+identifier_site_A = "https://myfcd.moh.gov.my/myfcdcurrent/index.php/ajax/datatable_data"
+pattern_A = "R\d+\d+\d+\d+\d+\d+" # Identifier for each food item
+url1_A, url2_A = "https://myfcd.moh.gov.my/myfcdcurrent/index.php/site/detail_product/", "/0/168/-1/0/0" # Each pattern goes inbetween these
+
+### B) Industry module ###
+identifier_site_B = "https://myfcd.moh.gov.my/myfcdindustri//static/DataTables-1.10.12/examples/server_side/scripts/server_processing.php"
+pattern_B = "\d+\d+\d+\d+\d+\d+\d+" # Identifier for each food item
+url1_B, url2_B = "https://myfcd.moh.gov.my/myfcdindustri/index.php/site/detail_product/", "/0/10/-1/0/0/" # Each pattern goes inbetween these
+
+### C) 1997 module ###
+identifier_site_C = "https://myfcd.moh.gov.my/myfcd97/index.php/ajax/datatable_data"
+pattern_C = "\d+\d+\d+\d+\d+\d+" # Identifier for each food item
+url1_C, url2_C = "https://myfcd.moh.gov.my/myfcd97/index.php/site/detail_product/", "/0/10/-1/0/0/" # Each pattern goes inbetween these
 
 
-### Create the nutrition dictionary that will gather and store the data scraped from the website
-
-print("Creating entries in a dictionary for each URL/food item")
-nutrition = dict()
-# Analyze each URL (each food)
-for url in urls:
-    # Request web
-    my = requests.get(url, headers=headers)
-    # Parse html to string
-    parsed = str(my.content)
-    # Food name is between headers <h3>
-    nameIndex = ((len("<h3>") + parsed.find("<h3>")), (parsed.find("</h3")))
-    name = parsed[nameIndex[0]:nameIndex[1]]
-    ## Exclude the code at the end of the name
-    indexCode = name.find("<")
-    name = name[0:indexCode]
-    # Retrieve the JSON containing nutrition values
-    beginJSON = parsed.find("var product_nutrients =  ")
-    beginJSON = beginJSON + len("var product_nutrients =  ")
-    endJSON = parsed.find(";\\n", beginJSON)
-    nutriJSON = parsed[beginJSON:endJSON]
-    nutriJSON = json.loads(nutriJSON)
-    # Create list to store nutritional values for this item
-    nutrients = list()
-    # Retrieve the subdictionary entry containing the value of each nutrient
-    for nutrient in nutriJSON.keys():
-        value = nutriJSON[nutrient]["value"]
-        nutrientValue = (nutrient, value)
-        nutrients.append(nutrientValue)
-    # Append each entry to the nutrition dictionary
-    nutrition[name] = dict(nutrients)
-    print(name, " retrieved successfully with all its nutrients")
-
-## B) Scraping the Industry Module
-# Process is similar to before, but the website with all identifiers is https://myfcd.moh.gov.my/myfcdindustri//static/DataTables-1.10.12/examples/server_side/scripts/server_processing.php in this case. The URLs look like this:
-# `https://myfcd.moh.gov.my/myfcdindustri/index.php/site/detail_product/XXXXXXX/0/10/-1/0/0/`, where X is any digit from 0-9.
-print(4*"\n")
-print("//////////////////////////////////////////////")
-# Set up request parameters
-print("Setting up request parameters for B) Malaysian FCD Industry Module")
-print("//////////////////////////////////////////////")
-print(4*"\n")
-headers={'User-Agent': 'Mozilla/5.0'}
-identifierSite = "https://myfcd.moh.gov.my/myfcdindustri//static/DataTables-1.10.12/examples/server_side/scripts/server_processing.php"
-r = requests.get(identifierSite, headers=headers)
-parsed = r.text
-pattern = "\d+\d+\d+\d+\d+\d+\d+"
-matches = re.findall(pattern, parsed)
-# URLs to be generated contain matches inbetween strings url1 and url1
-url1, url2 = "https://myfcd.moh.gov.my/myfcdindustri/index.php/site/detail_product/", "/0/10/-1/0/0/"
-# Create list to store all URLs
-urls = []
-# Assemble each identifier's URL
-print("Finding all URLs for items in A) FCD current")
-for match in matches:
-    url = "".join(("".join((url1, match)), url2))
-    urls.append(url)
-    print(match, " URL:", url)
-print("Found all items")
-
-nutritionIndustry = dict()
-# Analyze each URL (each food)
-print("Creating entries in a dictionary for each URL/food item")
-for url in urls:
-    # Request web
-    # Request web
-    my = requests.get(url, headers=headers)
-    # Parse html to string
-    parsed = str(my.content)
-    # Food name is between headers <h3>
-    nameIndex = ((len("<h3>") + parsed.find("<h3>")), (parsed.find("</h3")))
-    name = parsed[nameIndex[0]:nameIndex[1]]
-    ## Exclude the code at the end of the name
-    indexCode = name.find("<")
-    name = name[0:indexCode]
-    # Retrieve the JSON containing nutrition values
-    beginJSON = parsed.find("var product_nutrients =  ")
-    beginJSON = beginJSON + len("var product_nutrients =  ")
-    endJSON = parsed.find(";\\n", beginJSON)
-    nutriJSON = parsed[beginJSON:endJSON]
-    nutriJSON = json.loads(nutriJSON)
-    # In this case, they did not add key names. To work as a dictionary, I will add dummy key names
-    i = 0
-    nutriJSONdict = dict()
-    for item in nutriJSON:
-        dummy = i
-        i = i+1
-        nutriJSONdict[dummy] = item
-    nutriJSON = nutriJSONdict
-    # Create list to store nutritional values for this item
-    nutrients = list()
-    # Retrieve the subdictionary entry containing the value of each nutrient
-    for nutrient in nutriJSON.keys():
-        value = nutriJSON[nutrient]["value"]
-        nutrient = nutriJSON[nutrient]["name"]
-        nutrientValue = (nutrient, value)
-        nutrients.append(nutrientValue)
-    # Append each entry to the nutrition dictionary
-    nutritionIndustry[name] = dict(nutrients)
-    print(name, " retrieved successfully with all its nutrients")
-
-print("//////////////////////////////////////////////")
-print(4*"\n")
+# Functions
+## Function that returns all food item sites (urls). Identifier site is where the JS table data is stored.
+def requestFoodItems(headers, identifier, pattern, url1, url2):
+    r = requests.get(identifier, headers=headers)
+    parsed = r.text
+    matches = re.findall(pattern, parsed)
+    urls = []
+    # Assemble each identifier's URL
+    progress = 0
+    for match in matches:  
+        progress += 1
+        url = "".join(("".join((url1, match)), url2))
+        urls.append(url)
+        print("Gathering all food item URLS... {}/{}".format(progress, len(matches)))
+    return urls
 
 
-## C) Scraping the 1997 Module
-# Process is similar to before, but the website with all identifiers is https://myfcd.moh.gov.my/myfcdindustri//static/DataTables-1.10.12/examples/server_side/scripts/server_processing.php in this case. The URLs look like this:
-# `https://myfcd.moh.gov.my/myfcdindustri/index.php/site/detail_product/XXXXXXX/0/10/-1/0/0/`, where X is any digit from 0-9.
-print(4*"\n")
-print("//////////////////////////////////////////////")
-# Set up request parameters
-print("Setting up C) Malaysian FCD 1997 Module")
-print("//////////////////////////////////////////////")
-print(4*"\n")
-headers={'User-Agent': 'Mozilla/5.0'}
-identifierSite = "https://myfcd.moh.gov.my/myfcd97/index.php/ajax/datatable_data"
-r = requests.get(identifierSite, headers=headers)
-parsed = r.text
-pattern = "\d+\d+\d+\d+\d+\d+"
-matches = re.findall(pattern, parsed)
-print(matches)
-# URLs to be generated contain matches inbetween strings url1 and url1
-url1, url2 = "https://myfcd.moh.gov.my/myfcd97/index.php/site/detail_product/", "/0/10/-1/0/0/"
-# Create list to store all URLs
-urls = []
-# Assemble each identifier's URL
-print("Finding all URLs for items in C) Malaysia FCD 1997")
-for match in matches:
-    url = "".join(("".join((url1, match)), url2))
-    urls.append(url)
-    print(match, " URL:", url)
-print("Found all items")
+## A function that creates the nutrition dictionary that will gather and store the data scraped from the website
 
-nutrition1997 = dict()
-# Analyze each URL (each food)
-print("Creating entries in a dictionary for each URL/food item")
-for url in urls:
-    # Request web
-    # Request web
-    my = requests.get(url, headers=headers)
-    # Parse html to string
-    parsed = str(my.content)
-    # Food name is between headers <h3>
-    nameIndex = ((len("<h3>") + parsed.find("<h3>")), (parsed.find("</h3")))
-    name = parsed[nameIndex[0]:nameIndex[1]]
-    ## Exclude the code at the end of the name
-    indexCode = name.find("<")
-    name = name[0:indexCode]
-    # Retrieve the JSON containing nutrition values
-    beginJSON = parsed.find("var product_nutrients =  ")
-    beginJSON = beginJSON + len("var product_nutrients =  ")
-    endJSON = parsed.find(";\\n", beginJSON)
-    nutriJSON = parsed[beginJSON:endJSON]
-    nutriJSON = json.loads(nutriJSON)
-    # In this case, they did not add key names. To work as a dictionary, I will add dummy key names
-    i = 0
-    nutriJSONdict = dict()
-    for item in nutriJSON:
-        dummy = i
-        i = i+1
-        nutriJSONdict[dummy] = item
-    nutriJSON = nutriJSONdict
-    # Create list to store nutritional values for this item
-    nutrients = list()
-    # Retrieve the subdictionary entry containing the value of each nutrient
-    for nutrient in nutriJSON.keys():
-        value = nutriJSON[nutrient]["value"]
-        nutrient = nutriJSON[nutrient]["name"]
-        nutrientValue = (nutrient, value)
-        nutrients.append(nutrientValue)
-    # Append each entry to the nutrition dictionary
-    nutrition1997[name] = dict(nutrients)
-    print(name, " retrieved successfully with all its nutrients")
-## Export a csv combining both databases
-# This csv will be formatted in R afterwards, but it is already utilizable and contrastable against MyFCD.
-# Append the two databases into one dictionary
+def make_nutrition_tables(urls, headers, make_dummy_dict, fix_nutrient_name = False):
+    nutrition = dict()
+    # Analyze each URL (each food)
+    progress_urls = 0
+    for url in urls:
+        time.sleep(2)
+        progress_urls += 1
+        print("Requesting url #{}/{}".format(progress_urls, len(urls)))
+        # Request web
+        my = requests.get(url, headers=headers)
+        # Parse html to string
+        parsed = str(my.content)
+        # Food name is between headers <h3>
+        nameIndex = ((len("<h3>") + parsed.find("<h3>")), (parsed.find("</h3")))
+        name = parsed[nameIndex[0]:nameIndex[1]]
+        ## Exclude the code at the end of the name
+        indexCode = name.find("<")
+        name = name[0:indexCode]
+        # Retrieve the JSON containing nutrition values
+        beginJSON = parsed.find("var product_nutrients =  ")
+        beginJSON = beginJSON + len("var product_nutrients =  ")
+        endJSON = parsed.find(";\\n", beginJSON)
+        nutriJSON = parsed[beginJSON:endJSON]
+        nutriJSON = json.loads(nutriJSON)
+        print("Creating food item dictionary...")
+        if(make_dummy_dict == True): # In Modules B) and C) they did not add key names. To work as a dictionary, I will add dummy key names           
+            i = 0
+            nutriJSONdict = dict()
+            for item in nutriJSON:
+                dummy = i
+                i = i+1
+                nutriJSONdict[dummy] = item
+            nutriJSON = nutriJSONdict
+            print("Added item #{} to the dictionary...".format(i))
+        # Create list to store nutritional values for this item
+        nutrients = list()
+        # Retrieve the subdictionary entry containing the value of each nutrient
+        for nutrient in nutriJSON.keys():
+            value = nutriJSON[nutrient]["value"]
+            if(fix_nutrient_name == True): # The JSON from C) Module 1997 doesn´t name each nutrient entry by its name, but the name can be found as a key.
+                nutrient = nutriJSON[nutrient]["name"]
+            nutrientValue = (nutrient, value)
+            nutrients.append(nutrientValue)
+            print("Food item: {}, nutrient: {} successfully added to dictionary".format(name, nutrient))
+        # Append each entry to the nutrition dictionary
+        nutrition[name] = dict(nutrients)
+    print("Finished scraping this module.")
+    return nutrition
 
-print("All data retrieved successfully, creating output table")
-print("//////////////////////////////////////////////")
-print(4*"\n")
-nutrition.update(nutritionIndustry)
-nutrition.update(nutrition1997)
-# Create a data frame and export it in csv
-nutritionDf = pd.DataFrame(nutrition)
-nutritionDf.to_csv("fctMalaysia.csv")
-# Create a JSON and export it too
-with open("fctJSON", "w") as json_file:
-        json.dump(nutrition, json_file)
-print("fctMalaysia.csv and fctJSON.JSON written successfully.")
+# Main
+
+def main():
+    """
+    Scrape the Malaysian Food Composition Database
+    
+    """
+    delim = '-' * 79
+    print(textwrap.dedent(
+        """
+        Title:\t\tScrape the Malaysian Food Composition Database
+        Author:\t\tJavi Millán
+        Date:\t\tSeptember 2021
+        Important:\tRequests are slowed down to play nice with the website. Code will take some minutes.
+        {}""".format(delim)
+    ))
+    
+    # Request all urls
+    print("Requesting urls.")
+    print("Requesting urls for module A)")
+    urls_A = requestFoodItems(my_headers, identifier_site_A, pattern_A, url1_A, url2_A)
+    print("Requesting urls for module B)")
+    urls_B = requestFoodItems(my_headers, identifier_site_B, pattern_B, url1_B, url2_B)
+    print("Requesting urls for module C)")
+    urls_C = requestFoodItems(my_headers, identifier_site_C, pattern_C, url1_C, url2_C)
+    print(delim)
+    # Fill up nutrition dictionary
+    print("Creating nutrition dictionary for all modules")
+    print("MODULE A) CURRENT MALAYSIAN FCD")
+    nutrition = make_nutrition_tables(urls_A, my_headers, make_dummy_dict = False)
+    print("MODULE B) INDUSTRY MODULE")
+    nutrition_B = make_nutrition_tables(urls_B, my_headers, make_dummy_dict = True) 
+    print("MODULE C) 1997 MODULE")
+    nutrition_C = make_nutrition_tables(urls_C, my_headers, make_dummy_dict = True, fix_nutrient_name =True)
+    nutrition.update(nutrition_B)
+    nutrition.update(nutrition_C)
+    print("Dictionary complete")
+    print(delim)
+    # Create a data frame and export it in csv
+    nutritionDf = pd.DataFrame(nutrition)
+    nutritionDf.to_csv("fctMalaysia.csv")
+    # Create a JSON and export it too
+    with open("fctJSON", "w") as json_file:
+            json.dump(nutrition, json_file)
+    print("Successfully exported fctJSON.JSON and fctMalaysia.csv.")
+
+if __name__ == "__main__":
+    main()
