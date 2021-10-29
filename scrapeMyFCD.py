@@ -125,6 +125,7 @@ def main():
     ))
     
     # Request all urls
+    time.sleep(5) # Give some time to read my name
     print("Requesting urls.")
     print("Requesting urls for module A)")
     urls_A = requestFoodItems(my_headers, identifier_site_A, pattern_A, url1_A, url2_A)
