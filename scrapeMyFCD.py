@@ -125,20 +125,26 @@ def main():
     ))
     
     # Request all urls
+    print("Requesting urls.")
     print("Requesting urls for module A)")
     urls_A = requestFoodItems(my_headers, identifier_site_A, pattern_A, url1_A, url2_A)
     print("Requesting urls for module B)")
     urls_B = requestFoodItems(my_headers, identifier_site_B, pattern_B, url1_B, url2_B)
     print("Requesting urls for module C)")
     urls_C = requestFoodItems(my_headers, identifier_site_C, pattern_C, url1_C, url2_C)
-    
+    print(delim)
     # Fill up nutrition dictionary
     print("Creating nutrition dictionary for all modules")
+    print("MODULE A) CURRENT MALAYSIAN FCD")
     nutrition = make_nutrition_tables(urls_A, my_headers, make_dummy_dict = False)
+    print("MODULE B) INDUSTRY MODULE")
     nutrition_B = make_nutrition_tables(urls_B, my_headers, make_dummy_dict = True) 
+    print("MODULE C) 1997 MODULE")
     nutrition_C = make_nutrition_tables(urls_C, my_headers, make_dummy_dict = True, fix_nutrient_name =True)
     nutrition.update(nutrition_B)
     nutrition.update(nutrition_C)
+    print("Dictionary complete")
+    print(delim)
     # Create a data frame and export it in csv
     nutritionDf = pd.DataFrame(nutrition)
     nutritionDf.to_csv("fctMalaysia.csv")
